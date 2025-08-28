@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎉 Happy Birthday Timer 🎉</title>
+<style>
+body{margin:0;padding:0;height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#fceabb,#f8b500);font-family:'Arial',sans-serif;overflow:hidden;}
+.container{text-align:center;width:90%;max-width:400px;}
+.circle-timer{position:relative;width:250px;height:250px;border-radius:50%;background:conic-gradient(#ff0066 0deg,#ff0066 0deg,rgba(255,255,255,0.2) 0deg,rgba(255,255,255,0.2) 360deg);display:flex;justify-content:center;align-items:center;margin:0 auto;box-shadow:0 0 25px rgba(0,0,0,0.3);}
+.timer-text{font-size:4rem;font-weight:bold;color:#fff;z-index:2;}
+.message{font-size:2rem;margin-top:20px;color:#ff0066;opacity:0;transition: opacity 0.5s ease, transform 0.5s ease;}
+.message.show{opacity:1;transform:scale(1.2);}
+canvas{position:fixed;top:0;left:0;pointer-events:none;}
+@media(max-width:500px){.circle-timer{width:180px;height:180px;}.timer-text{font-size:3rem;}.message{font-size:1.5rem;}}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="circle-timer"><div class="timer-text" id="timer">30</div></div>
+    <div class="message" id="message"></div>
+</div>
+<canvas id="confetti"></canvas>
+<audio id="sound" src="https://freesound.org/data/previews/66/66717_931655-lq.mp3"></audio>
+
+<script>
+const timerEl=document.getElementById('timer');
+const messageEl=document.getElementById('message');
+const circle=document.querySelector('.circle-timer');
+const canvas=document.getElementById('confetti');
+const ctx=canvas.getContext('2d');
+const soundEl=document.getElementById('sound');
+canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+
+const confettiParticles=[];
+for(let i=0;i<150;i++){confettiParticles.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height-canvas.height,r:Math.random()*6+4,d:Math.random()*20+10,color:`hsl(${Math.random()*360},100%,50%)`,tilt:Math.random()*10-10,tiltAngleIncrement:Math.random()*0.07+0.05});}
+function drawConfetti(){ctx.clearRect(0,0,canvas.width,canvas.height); confettiParticles.forEach(p=>{ctx.beginPath(); ctx.lineWidth=p.r/2; ctx.strokeStyle=p.color; ctx.moveTo(p.x+p.tilt+p.r/4,p.y); ctx.lineTo(p.x+p.tilt,p.y+p.tilt+p.r/4); ctx.stroke(); p.tilt+=p.tiltAngleIncrement; p.y+=Math.cos(p.d)+2+p.r/2; if(p.y>canvas.height){p.y=-10;p.x=Math.random()*canvas.width;} }); requestAnimationFrame(drawConfetti);}
+drawConfetti();
+
+const socket=new WebSocket('wss://YOUR_RENDER_BACKEND.onrender.com'); // Replace backend URL
+socket.onmessage=(event)=>{const data=JSON.parse(event.data); if(data.type==='timer'){timerEl.textContent=data.time; messageEl.classList.remove('show'); const deg=((30-data.time)/30)*360; circle.style.background=`conic-gradient(#ff0066 ${deg}deg, rgba(255,255,255,0.2) ${deg}deg 360deg)`;} if(data.type==='message'){messageEl.textContent=data.text; messageEl.classList.add('show'); if(data.playSound){soundEl.currentTime=0; soundEl.play();}}}
+window.addEventListener('resize',()=>{canvas.width=window.innerWidth; canvas.height=window.innerHeight;});
+</script>
+</body>
+</html>
